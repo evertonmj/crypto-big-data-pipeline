@@ -1,0 +1,25 @@
+
+server:
+  port: 8090
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+blockchain:
+  api:
+#    exchange: https://api.blockchain.com/v3/exchange
+    exchange: https://coincheck.com/api
+    trades-pair: /trades?pair=
+  pairs: btc_jpy,eth_jpy,etc_jpy,lsk_jpy,xrp_jpy,xem_jpy,mona_jpy,iost_jpy,enj_jpy,shib_jpy,plt_jpy,fnct_jpy,dai_jpy,wbtc_jpy,bril_jpy
+
+# Kafka and scheduling settings
+kafka:
+  topic:
+    name: market_tickers_data
+
+fetch:
+  interval:
+    ms: 10000

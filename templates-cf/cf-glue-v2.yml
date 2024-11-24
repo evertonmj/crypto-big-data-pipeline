@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Combined CloudFormation Template for Big Data Lab with Kafka, Glue, and S3 Integration.
+Parameters:
+  KafkaBootstrapServers:
+    Type: String
+    Description: Kafka bootstrap servers (e.g., broker1:9092,broker2:9092).
+  KafkaTopicName:
+    Type: String
+    Description: Name of the Kafka topic to read messages from.
+    Default: "market_tickers_data"
+  S3BucketName:
+    Type: String
+    Description: Name of the S3 bucket to store data.
+  GlueDatabaseName:
+    Type: String
+    Description: Name of the Glue database to store data.
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket to store data.
+  PublicSubnet:
+    Type: String
+    Description: Public subnet ID for Glue job.
+  PublicSecurityGroup:
+    Type: String
+    Description: Public security group ID for Glue job.
+
+Resources:
+  # Glue Resources
+  GlueDatabase:
+    Type: "AWS::Glue::Database"
+    Properties:
+      CatalogId: 
+        Ref: "AWS::AccountId"
+      DatabaseInput:
+        Name: 
+          Ref: GlueDatabaseName
+
+  GlueConnection:
+    Type: "AWS::Glue::Connection"
+    Properties:
+      CatalogId: 
+        Ref: "AWS::AccountId"
+      ConnectionInput:
+        Name: "KafkaConnection"
+        ConnectionType: "KAFKA"
+        PhysicalConnectionRequirements:
+          AvailabilityZone: 
+            Fn::Select: 
+              - 0
+              - Fn::GetAZs: ""
+          SubnetId: 
+            Ref: PublicSubnet
+          SecurityGroupIdList: [
+            Ref: PublicSecurityGroup
+          ]
+        ConnectionProperties:
+          KAFKA_BOOTSTRAP_SERVERS: 
+            Ref: KafkaBootstrapServers
+          KAFKA_TOPIC_NAME: 
+            Ref: KafkaTopicName
+
+  GlueJob:
+    Type: "AWS::Glue::Job"
+    Properties:
+      Name: "KafkaToS3Job"
+      Role: "LabRole"
+      Command:
+        Name: "glueetl"
+        ScriptLocation: "s3://${S3BucketName}/scripts/kafka_to_s3.py" #variavel s3
+        PythonVersion: "3"
+      DefaultArguments:
+        "--TempDir": 
+          Fn::Sub: "s3://${S3BucketName}/temp/"
+        "--job-bookmark-option": "job-bookmark-enable"
+        "--KAFKA_TOPIC_NAME": 
+          Fn::Sub: "${KafkaTopicName}"
+        "--S3_OUTPUT_PATH": 
+          Fn::Sub: "s3://${S3BucketName}/output/"
+      GlueVersion: "2.0"
+      Timeout: 2880
+      MaxRetries: 1
+Outputs:
+  GlueDatabaseName:
+    Description: Glue Database Name
+    Value: 
+      Ref: GlueDatabase
+  GlueJobName:
+    Description: Glue Job Name
+    Value: 
+      Ref: GlueJob
+
+#create glue interface
