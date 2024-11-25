@@ -131,6 +131,11 @@ Resources:
           FromPort: 9092
           ToPort: 9092
           CidrIp: "0.0.0.0/0"
+        - IpProtocol: "tcp"
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: "tcp"
+
       SecurityGroupEgress:
         - IpProtocol: "-1"
           CidrIp: "0.0.0.0/0"
@@ -148,7 +153,7 @@ Resources:
     Type: "AWS::EC2::Instance"
     Properties:
       InstanceType: "t2.medium"
-      ImageId: "ami-012967cc5a8c9f891"  # Update to your region-specific AMI
+      ImageId: "ami-012967cc5a8c9f891"
       SubnetId: 
         Fn::GetAtt:
           - PublicSubnet
@@ -165,7 +170,7 @@ Resources:
           
           echo "Installing tools..."
           sudo yum update -y
-          sudo yum install -y java wget maven git
+          sudo yum install -y java wget maven git python pip
         
           cd /home/ec2-user
           
@@ -194,6 +199,11 @@ Resources:
           cd crypto-big-data-pipeline/apps/BlockchainMarketScrapper
           mvn clean install
           nohup mvn spring-boot:run &
+
+          echo "Running prediction app"
+          cd /home/ec2-user/crypto-big-data-pipeline/apps/predict-app
+          pip install numpy pandas scikit-learn fastapi uvicorn pickle pydantic
+          nohup python3 predict-app/predict-crypto-app.py &
 
 Outputs:
   PublicIp:
