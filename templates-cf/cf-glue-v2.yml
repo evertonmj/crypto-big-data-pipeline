@@ -4,6 +4,7 @@ Parameters:
   KafkaBootstrapServers:
     Type: String
     Description: Kafka bootstrap servers (e.g., broker1:9092,broker2:9092).
+    Default: '10.0.1.50:9092'
   KafkaTopicName:
     Type: String
     Description: Name of the Kafka topic to read messages from.
@@ -11,20 +12,32 @@ Parameters:
   S3BucketName:
     Type: String
     Description: Name of the S3 bucket to store data.
+    Default: 'basic-stack-s3bucket-fxxrjdrgc3w6'
   GlueDatabaseName:
     Type: String
     Description: Name of the Glue database to store data.
-  BucketName:
-    Type: String
-    Description: Name of the S3 bucket to store data.
+    Default: 'market_db'
   PublicSubnet:
     Type: String
     Description: Public subnet ID for Glue job.
+    Default: 'subnet-09695c37364200015'
   PublicSecurityGroup:
     Type: String
     Description: Public security group ID for Glue job.
+    Default: 'sg-0c3865671a9160661'
 
 Resources:
+  CommandRunner:
+    Type: AWSUtility::CloudFormation::CommandRunner
+    Properties:
+      Command: 
+        "Fn::Join": [
+          '', [
+            aws s3 cp ../scripts/kafka_to_s3.py s3://,
+            Ref: S3BucketName,
+            "/scripts/kafka_to_s3.py"
+          ]
+        ]
   # Glue Resources
   GlueDatabase:
     Type: "AWS::Glue::Database"

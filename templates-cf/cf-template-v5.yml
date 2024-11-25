@@ -162,24 +162,36 @@ Resources:
         Fn::Base64: |
           #!/bin/bash
           echo "Setting up Big Data Lab..."
+          
+          echo "Installing tools..."
           sudo yum update -y
           sudo yum install -y java wget maven git
+        
           cd /home/ec2-user
+          
+          echo "Cloning the repository..."
+          git clone https://github.com/evertonmj/crypto-big-data-pipeline.git
+          chmod -R 777 crypto-big-data-pipeline/
+
+          echo "Installing Kafka..."
           wget https://downloads.apache.org/kafka/3.8.0/kafka_2.12-3.8.0.tgz
           tar -xzf kafka_2.12-3.8.0.tgz
           sudo chmod -R 777 kafka_2.12-3.8.0
           sudo chown -R ec2-user:ec2-user kafka_2.12-3.8.0
-          git clone https://github.com/evertonmj/howtocode_bigdata.git
+          echo "Installing Kafka UI..."
           wget https://github.com/provectus/kafka-ui/releases/download/v0.7.2/kafka-ui-api-v0.7.2.jar
           mkdir -p /home/ec2-user/conf
           cd /home/ec2-user/
-          chmod -R 777 howtocode_bigdata/
-          cp /home/ec2-user/howtocode_bigdata/kafka-ec2-aws/conf/application.yaml /home/ec2-user/conf
+          cp /home/ec2-user/crypto-big-data-pipeline/kafka-ec2-aws/conf/application.yaml /home/ec2-user/conf
+
+          echo "Starting Kafka and Kafka UI..."
           export KAFKA_HOME=/home/ec2-user/kafka_2.12-3.8.0
           $KAFKA_HOME/bin/zookeeper-server-start.sh -daemon $KAFKA_HOME/config/zookeeper.properties
           $KAFKA_HOME/bin/kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
           nohup java -Dspring.config.additional-location=/home/ec2-user/conf/application.yaml --add-opens java.rmi/javax.rmi.ssl=ALL-UNNAMED -jar /home/ec2-user/kafka-ui-api-v0.7.2.jar &
-          cd howtocode_bigdata/ec2-kafka/ingestion_storage_practice/BlockchainMarketScrapper
+
+          echo "Building and running the Market Scrapper..."
+          cd crypto-big-data-pipeline/apps/BlockchainMarketScrapper
           mvn clean install
           nohup mvn spring-boot:run &
 
